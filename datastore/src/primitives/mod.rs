@@ -7,9 +7,12 @@ pub mod blob;
 pub mod integer;
 pub mod string;
 pub mod timestamp;
+
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Primitives {
-    Timestamp(VicInstant),
+    Instant(VicInstant),
+    Duration(VicDuration),
     Integer(i64),
     Float(f64),
     Text(String),
