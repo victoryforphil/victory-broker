@@ -111,11 +111,12 @@ mod tests {
 
     use super::*;
     use datastore::primitives::timestamp::{VicInstant, VicTimecode};
-    use datastore::topics::TopicKeySection;
+    use datastore::topics::{TopicKey, TopicKeySection};
     use log::info;
     use tokio::sync::Mutex;
 
     use std::sync::mpsc::{channel, Sender};
+    use std::sync::Arc;
     use std::time::Duration;
     use std::{thread, vec};
 
@@ -165,7 +166,6 @@ mod tests {
 
     #[test]
     fn test_node_sub_callback() {
-        pretty_env_logger::init();
         let adapter = Arc::new(Mutex::new(MockPubSubAdapter::new()));
         let mut node = Node::new(1, "test".to_string(), adapter.clone());
 
