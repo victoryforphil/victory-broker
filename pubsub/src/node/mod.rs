@@ -1,22 +1,16 @@
-use std::{
-    collections::{BTreeMap, HashMap},
-    sync::Arc,
-};
+use std::collections::{BTreeMap, HashMap};
 
 use datastore::{
-    database::Datastore,
     datapoints::{Datapoint, DatapointMap},
-    topics::{TopicKey, TopicKeyHandle, TopicKeyProvider},
+    topics::{TopicKeyHandle, TopicKeyProvider},
 };
 use log::debug;
 use sub_callback::SubCallbackHandle;
-use tokio::sync::Mutex;
 
 use crate::{
     adapters::{PubSubAdapter, PubSubAdapterHandle},
     client::PubSubClientIDType,
     messages::{PubSubMessage, PublishMessage},
-    MutexType,
 };
 pub mod sub_callback;
 

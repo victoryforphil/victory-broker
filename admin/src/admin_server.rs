@@ -1,22 +1,12 @@
-use std::{
-    sync::{Arc, Mutex},
-    time::Instant,
-};
 
-use log::{debug, info};
-use prost::Message;
+use log::info;
 
-use pubsub::server::{PubSubServer, PubSubServerHandle};
-use tokio::sync::mpsc::Receiver;
-use tonic::{
-    transport::{Channel, Server},
-    Request, Response, Status,
-};
-use tonic_web::GrpcWebLayer;
+use pubsub::server::PubSubServerHandle;
+use tonic::transport::Server;
 
 use crate::{
     proto::pubsub_admin::{
-        self, pub_sub_admin_service_server::PubSubAdminServiceServer, ChannelResponse,
+        pub_sub_admin_service_server::PubSubAdminServiceServer,
     },
     services::pubsub::PubSubAdmin,
 };

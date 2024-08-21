@@ -1,18 +1,11 @@
-use crate::proto::pubsub_admin::{self, ChannelRequest, ChannelResponse, PubSubChannel};
-use std::{
-    sync::{Arc, Mutex},
-    time::{Duration, Instant},
-};
+use crate::proto::pubsub_admin::{self, ChannelResponse, PubSubChannel};
+use std::time::Duration;
 
-use log::{debug, info};
-use prost::Message;
+use log::info;
 
-use pubsub::server::{PubSubServer, PubSubServerHandle};
-use std::pin::Pin;
-use tokio::sync::{mpsc, oneshot};
-use tokio_stream::{wrappers::ReceiverStream, Stream, StreamExt};
-use tonic::{transport::Server, Request, Response, Status};
-use tonic_web::GrpcWebLayer;
+use pubsub::server::PubSubServerHandle;
+use tokio_stream::{wrappers::ReceiverStream, StreamExt};
+use tonic::{Request, Response, Status};
 /// Provided by the requester and used by the manager task to send
 /// the command response back to the requester.
 
