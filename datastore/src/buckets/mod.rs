@@ -75,7 +75,11 @@ impl Bucket {
 
     pub fn get_updated_value(&self, time: &VicInstantHandle) -> Option<&Primitives> {
         // Get the nearest value before the time
-        let before = self.values.range(..time.clone()).last().map(|(_, v)| &v.value);
+        let before = self
+            .values
+            .range(..time.clone())
+            .last()
+            .map(|(_, v)| &v.value);
         before.or_else(|| self.get_latest_value())
     }
 
@@ -86,21 +90,12 @@ impl Bucket {
     }
 
     pub fn get_data_points_after(&self, time: &VicInstantHandle) -> Vec<&Datapoint> {
-        self.values
-            .range(time.clone()..)
-            .map(|(_, v)| v)
-            .collect()
+        self.values.range(time.clone()..).map(|(_, v)| v).collect()
     }
 
     pub fn get_data_points_before(&self, time: &VicInstantHandle) -> Vec<&Datapoint> {
-        self.values
-            .range(..time.clone())
-            .map(|(_, v)| v)
-            .collect()
+        self.values.range(..time.clone()).map(|(_, v)| v).collect()
     }
-
-    
-
 }
 
 #[cfg(test)]

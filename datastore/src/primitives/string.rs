@@ -1,4 +1,4 @@
-use super :: Primitives ;
+use super::Primitives;
 
 impl From<&str> for Primitives {
     fn from(value: &str) -> Self {
@@ -20,4 +20,3 @@ impl From<Primitives> for String {
         }
     }
 }
-

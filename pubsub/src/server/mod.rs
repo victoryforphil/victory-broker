@@ -37,7 +37,7 @@ impl PubSubServer {
             datastore: Datastore::new(),
         }
     }
-   
+
     pub fn add_adapter(&mut self, adapter: PubSubAdapterHandle) {
         self.adapters.push(adapter);
     }
@@ -92,7 +92,6 @@ impl PubSubServer {
                         .push(PubSubMessage::Update(update.clone()));
                 }
             }
-            
         }
 
         for adapter in self.adapters.iter_mut() {

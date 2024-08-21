@@ -35,24 +35,35 @@ impl pubsub_admin::pub_sub_admin_service_server::PubSubAdminService for PubSubAd
 
         println!("EchoServer::server_streaming_echo");
         let server = self.server.clone();
-  
+
         tokio::spawn(async move {
             loop {
                 let channels = server.read().await.channels.clone();
-               
+
                 let channel_data = channels
                     .iter()
                     .map(|(topic, clients)| {
                         let clients = clients.try_lock().unwrap();
                         return PubSubChannel {
-                        topic: topic.to_string(),
-                        subscribers: clients.subscribers.iter().map(|client| client.try_lock().unwrap().id.to_string()).collect(),
-                        publishers: clients.publishers.iter().map(|client| client.try_lock().unwrap().id.to_string()).collect(),
-                        message_count: clients.get_queue_size() as i32
-                    }})
+                            topic: topic.to_string(),
+                            subscribers: clients
+                                .subscribers
+                                .iter()
+                                .map(|client| client.try_lock().unwrap().id.to_string())
+                                .collect(),
+                            publishers: clients
+                                .publishers
+                                .iter()
+                                .map(|client| client.try_lock().unwrap().id.to_string())
+                                .collect(),
+                            message_count: clients.get_queue_size() as i32,
+                        };
+                    })
                     .collect();
 
-                let response = ChannelResponse { channels:channel_data };
+                let response = ChannelResponse {
+                    channels: channel_data,
+                };
                 match tx.send(Ok(response)).await {
                     Ok(_) => {
                         info!("\titem sent to client");

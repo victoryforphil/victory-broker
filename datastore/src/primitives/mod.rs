@@ -3,9 +3,9 @@ use timestamp::VicInstant;
 
 use crate::topics::TopicIDType;
 
+pub mod blob;
 pub mod integer;
 pub mod string;
-pub mod blob;
 pub mod timestamp;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Primitives {

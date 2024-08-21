@@ -17,7 +17,6 @@ use pubsub::{adapters::mock::MockPubSubAdapter, messages::*, server::PubSubServe
 #[tokio::main]
 async fn main() {
     env_logger::init();
-
 }
 #[cfg(test)]
 

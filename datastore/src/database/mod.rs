@@ -96,10 +96,9 @@ impl Datastore {
         let topic = topic.handle();
         let bucket = self.get_bucket(&topic)?;
         let bucket = bucket.read().unwrap();
-        let new_values  = bucket.get_data_points_after(&time.handle());
+        let new_values = bucket.get_data_points_after(&time.handle());
         Ok(new_values.iter().map(|v| v.topic.handle()).collect())
     }
-  
 }
 
 #[cfg(test)]

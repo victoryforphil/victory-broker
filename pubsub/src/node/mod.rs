@@ -66,7 +66,8 @@ impl Node {
 
         let mut sub_map: DatapointMap = BTreeMap::new();
         let read_message = adapter.read();
-        let read_message: Vec<&PubSubMessage> = read_message.iter().map(|(_, v)| v).flatten().collect();
+        let read_message: Vec<&PubSubMessage> =
+            read_message.iter().map(|(_, v)| v).flatten().collect();
         debug!("Node::tick: Read {} messages", read_message.len());
         for msg in read_message.iter() {
             match msg {
@@ -84,7 +85,10 @@ impl Node {
             }
         }
 
-        debug!("Node::tick: Publishing {} messages", self.publish_queue.len());
+        debug!(
+            "Node::tick: Publishing {} messages",
+            self.publish_queue.len()
+        );
         for message in self.publish_queue.drain(..) {
             let mut to_send = HashMap::new();
             for datapoint in message.messages.iter() {
@@ -118,8 +122,8 @@ mod tests {
     use tokio::sync::Mutex;
 
     use std::sync::mpsc::{channel, Sender};
-    use std::{thread, vec};
     use std::time::Duration;
+    use std::{thread, vec};
 
     struct TestSubCallback {
         sender: Sender<DatapointMap>,
@@ -160,10 +164,9 @@ mod tests {
 
         node.tick();
         let mut adapter = adapter.try_lock().unwrap();
-        let read_result=  adapter.client_read(1);
+        let read_result = adapter.client_read(1);
         info!("Clients read: {:?}", adapter.client_ids());
         assert_eq!(read_result.len(), 1);
-
     }
 
     #[test]
@@ -184,9 +187,12 @@ mod tests {
             "test".into(),
         );
         let message = UpdateMessage::new(datapoint.clone());
-    
+
         {
-            adapter.try_lock().unwrap().client_write(1, vec![PubSubMessage::Update(message.clone())]);
+            adapter
+                .try_lock()
+                .unwrap()
+                .client_write(1, vec![PubSubMessage::Update(message.clone())]);
         }
 
         {

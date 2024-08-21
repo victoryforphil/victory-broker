@@ -1,4 +1,7 @@
-use std::{collections::BTreeMap, sync::{Arc, RwLock}};
+use std::{
+    collections::BTreeMap,
+    sync::{Arc, RwLock},
+};
 
 use crate::{
     primitives::{timestamp::VicInstantHandle, Primitives},

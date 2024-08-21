@@ -18,15 +18,13 @@ use crate::{
     proto::pubsub_admin::{
         self, pub_sub_admin_service_server::PubSubAdminServiceServer, ChannelResponse,
     },
-    services::pubsub::{PubSubAdmin},
+    services::pubsub::PubSubAdmin,
 };
 
 pub struct AdminServer {}
 
 impl AdminServer {
     pub async fn start(server: PubSubServerHandle) -> Result<(), Box<dyn std::error::Error>> {
-       
-
         let server_handle = tokio::spawn(async move {
             let addr = "0.0.0.0:5050".parse().unwrap();
             let service = PubSubAdmin::new(server);
@@ -36,15 +34,12 @@ impl AdminServer {
 
             Server::builder()
                 .accept_http1(true)
-                
                 .add_service(service)
                 .serve(addr)
                 .await
                 .unwrap();
         });
         info!("Admin server started");
-
-     
 
         Ok(())
     }
