@@ -112,14 +112,14 @@ mod tests {
     use super::*;
 
     use datastore::time::{VicInstant, VicTimecode};
-    use datastore::topics::{TopicKey, TopicKeySection};
+    use datastore::topics::TopicKey;
     use log::info;
     use tokio::sync::Mutex;
 
     use std::sync::mpsc::{channel, Sender};
     use std::sync::Arc;
-    use std::time::Duration;
-    use std::{thread, vec};
+    
+    use std::vec;
 
     struct TestSubCallback {
         sender: Sender<DatapointMap>,
