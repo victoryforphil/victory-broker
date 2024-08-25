@@ -1,13 +1,13 @@
 use blob::VicBlob;
-use timestamp::VicInstant;
 
-use crate::topics::TopicIDType;
+use crate::{
+    time::{VicDuration, VicInstant},
+    topics::TopicIDType,
+};
 
 pub mod blob;
 pub mod integer;
 pub mod string;
-pub mod timestamp;
-
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Primitives {

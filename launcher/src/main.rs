@@ -4,10 +4,7 @@ use std::{
 };
 
 use admin::{admin_server::AdminServer, proto::pubsub_admin};
-use datastore::{
-    primitives::timestamp::{VicDuration, VicInstant},
-    topics::TopicKey,
-};
+
 pub type MutexType<T> = Arc<tokio::sync::Mutex<T>>;
 pub type RwLockType<T> = Arc<tokio::sync::RwLock<T>>;
 
