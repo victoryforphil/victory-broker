@@ -6,9 +6,8 @@ use std::{
 use datastore::time::VicDuration;
 use log::{debug, error, info};
 use tokio::{
-    net::{TcpListener, TcpSocket, TcpStream},
-    runtime::Handle,
-    sync::{mpsc::Sender, Mutex, RwLock},
+    net::{TcpListener, TcpStream},
+    sync::{Mutex, RwLock},
     task::JoinHandle,
 };
 use tracing::warn;
@@ -167,9 +166,9 @@ impl PubSubAdapter for TCPServerAdapter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::messages::PublishMessage;
-    use datastore::topics::TopicKey;
-    use std::sync::mpsc::{channel, Sender};
+    
+    
+    
 
     #[tokio::test]
     async fn test_tcp_server() {
@@ -179,7 +178,7 @@ mod tests {
             address: "0.0.0.0".to_string(),
             update_interval: VicDuration::new_hz(50.0),
         };
-        let mut adapter = TCPServerAdapter::new(options);
+        let adapter = TCPServerAdapter::new(options);
         assert_eq!(adapter.options.port, 8080);
     }
 }

@@ -1,7 +1,6 @@
 use crate::proto::pubsub_admin::{self, ChannelResponse, PubSubChannel};
 use std::time::Duration;
 
-use log::info;
 
 use pubsub::server::PubSubServerHandle;
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};

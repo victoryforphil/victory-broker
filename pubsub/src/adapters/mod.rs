@@ -1,9 +1,8 @@
 pub mod mock;
 pub mod tcp;
 
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
-use tokio::sync::Mutex;
 
 use crate::{client::PubSubClientIDType, messages::PubSubMessage, MutexType};
 

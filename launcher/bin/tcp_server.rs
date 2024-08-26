@@ -6,7 +6,7 @@ use pubsub::{
     adapters::tcp::{TCPServerAdapter, TCPServerOptions},
     server::PubSubServer,
 };
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::Mutex;
 
 pub type MutexType<T> = Arc<tokio::sync::Mutex<T>>;
 pub type RwLockType<T> = Arc<tokio::sync::RwLock<T>>;

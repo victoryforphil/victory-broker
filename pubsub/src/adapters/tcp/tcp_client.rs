@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
-use log::{debug, info, warn};
-use tokio::{net::TcpStream, runtime::Handle, sync::Mutex};
+use log::{debug, info};
+use tokio::{net::TcpStream, sync::Mutex};
 
 use crate::{
     adapters::{tcp::TCPPacket, PubSubAdapter},

@@ -12,7 +12,7 @@ use crate::{
     adapters::PubSubAdapterHandle,
     channel::{PubSubChannel, PubSubChannelHandle},
     client::{PubSubClient, PubSubClientHandle, PubSubClientIDType},
-    messages::{PubSubMessage, PublishMessage},
+    messages::PubSubMessage,
     RwLockType,
 };
 
