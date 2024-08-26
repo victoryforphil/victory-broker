@@ -1,65 +1,185 @@
 use std::{
-    collections::{BTreeMap, HashMap}, net::TcpListener, sync::Arc
+    collections::{BTreeMap, HashMap},
+    sync::Arc,
 };
 
-use tokio::{net::TcpSocket, sync::Mutex};
+use datastore::time::VicDuration;
+use log::{debug, error, info};
+use tokio::{
+    net::{TcpListener, TcpSocket, TcpStream},
+    runtime::Handle,
+    sync::{mpsc::Sender, Mutex, RwLock},
+    task::JoinHandle,
+};
+use tracing::warn;
 
-use crate::{adapters::PubSubAdapter, client::PubSubClientIDType, messages::PubSubMessage};
+use crate::{
+    adapters::{tcp::TCPPacket, PubSubAdapter},
+    client::PubSubClientIDType,
+    messages::PubSubMessage,
+};
+#[derive(Debug, Clone)]
+pub struct TCPServerOptions {
+    pub port: u16,
+    pub address: String,
+    pub update_interval: VicDuration,
+}
+pub type TCPClientMapHandle = Arc<RwLock<BTreeMap<PubSubClientIDType, TcpStream>>>;
 
-
-struct ListenerAgent{
+struct ListenerAgent {
+    options: TCPServerOptions,
     listener: TcpListener,
-    clients: BTreeMap<PubSubClientIDType, TcpSocket>,
-    tcp_out: tokio::sync::mpsc::Sender<(PubSubClientIDType, PubSubMessage)>,
-    tcp_in: tokio::sync::mpsc::Receiver<(PubSubClientIDType, PubSubMessage)>,
+    clients_out: TCPClientMapHandle,
 }
 
 impl ListenerAgent {
-    async fn start_listener(&mut self) {
-        loop {
-            let (socket, _) = self.listener.accept().await?;
-            let client_id = self.clients.len() as PubSubClientIDType;
-            self.clients.insert(client_id, socket);
-        }
+    pub fn make_client_map() -> TCPClientMapHandle {
+        Arc::new(RwLock::new(BTreeMap::new()))
+    }
+    pub fn start(options: TCPServerOptions, clients_out: TCPClientMapHandle) -> JoinHandle<()> {
+        info!(
+            "Starting ListenerAgent from thread: {:?} with options: {:#?}",
+            std::thread::current().id(),
+            options
+        );
+        tokio::spawn(async move {
+            debug!(
+                "ListenerAgent new thread: {:?}",
+                std::thread::current().id()
+            );
+            let url = format!("{}:{}", options.address, options.port);
+            info!("Starting TCP server on: {}", url);
+            let listener = TcpListener::bind(url).await;
+            let listener = match listener {
+                Ok(listener) => listener,
+                Err(e) => {
+                    error!("Failed to bind to address: {}", e);
+                    return;
+                }
+            };
+
+            let mut agent = ListenerAgent {
+                options: options.clone(),
+                listener,
+                clients_out,
+            };
+            loop {
+                agent.tick().await;
+                tokio::time::sleep(options.update_interval.as_duration()).await;
+            }
+        })
+    }
+
+    async fn tick(&mut self) {
+        let (stream, addr) = self.listener.accept().await.unwrap();
+        debug!("New TCP Stream: {:?}", addr);
+        let id = rand::random::<PubSubClientIDType>();
+        self.clients_out.write().await.insert(id, stream);
+        info!("New client registered: {:?} from {:?}", id, addr);
     }
 }
 
-type ListenerAgentHandle = Arc<Mutex<ListenerAgent>>
+type ListenerAgentHandle = Arc<Mutex<ListenerAgent>>;
 
 pub struct TCPServerAdapter {
-    agent: ListenerAgentHandle,
+    clients: TCPClientMapHandle,
+    agent: JoinHandle<()>,
+    options: TCPServerOptions,
 }
 
 impl TCPServerAdapter {
-    pub fn new() -> TCPServerAdapter {
-        let (tcp_out, tcp_in) = tokio::sync::mpsc::channel(100);
+    pub fn new(options: TCPServerOptions) -> TCPServerAdapter {
+        let clients = ListenerAgent::make_client_map();
+        let agent = ListenerAgent::start(options.clone(), clients.clone());
+        info!("TCPServerAdapter started with options: {:#?}", options);
         TCPServerAdapter {
-            agent: Arc::new(Mutex::new(ListenerAgent {
-                listener: TcpListener::bind("
+            agent,
+            clients,
+            options,
         }
-    }
-
-    pub fn start_server(&mut self) {
-        tokio::spawn(async move {
-            self.start_listener().await;
-        });
-    }
-
-    async fn start_listener(&mut self) {
-        let listener = TcpListener::bind("127.0.0.1:7001").await?;
-
-    }
-    async fn new_client(&mut self) {
-        todo!()
     }
 }
 
 impl PubSubAdapter for TCPServerAdapter {
-    fn read(&mut self) -> HashMap<PubSubClientIDType, Vec<PubSubMessage>> {
-        let results =
+    fn write(&mut self, to_send: HashMap<PubSubClientIDType, Vec<PubSubMessage>>) {
+        let clients = self.clients.clone();
+
+        tokio::spawn(async move {
+            debug!(
+                "Spawned new TCP write task: {:?}",
+                std::thread::current().id()
+            );
+            for (id, messages) in to_send {
+                let mut clients = clients.write().await;
+                let client = match clients.get_mut(&id) {
+                    Some(client) => client,
+                    None => {
+                        warn!("TCP Stream not found for client id: {:?}", id);
+                        continue;
+                    }
+                };
+                let n_messages = messages.len();
+                let packet = TCPPacket {
+                    from: 0,
+                    to: id,
+                    messages,
+                };
+                let packet = bincode::serialize(&packet).unwrap();
+                let size = packet.len() as u32;
+                debug!(
+                    "Sending TCPPacket of size {} bytes, containing {} messages",
+                    size, n_messages
+                );
+                client.try_write(packet.as_slice()).unwrap();
+            }
+        });
     }
 
-    fn write(&mut self, to_send: HashMap<PubSubClientIDType, Vec<PubSubMessage>>) {
-        todo!()
+    fn read(&mut self) -> HashMap<PubSubClientIDType, Vec<PubSubMessage>> {
+        let clients = self.clients.clone();
+        let mut res = HashMap::new();
+        for (id, stream) in clients.try_write().unwrap().iter_mut() {
+            let mut buffer = vec![0; 1024];
+            match stream.try_read(&mut buffer) {
+                Ok(_) => {}
+                Err(e) => {
+                    warn!("Failed to read from stream: {:?}", e);
+                    continue;
+                }
+            };
+
+            let packet: TCPPacket = bincode::deserialize(&buffer).unwrap();
+            debug!(
+                "Received TCPPacket from client: {:?} with {} messages",
+                id,
+                packet.messages.len()
+            );
+            res.insert(*id, packet.messages);
+        }
+        res
+    }
+
+    fn get_name(&self) -> String {
+        "TCPServerAdapter".to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::messages::PublishMessage;
+    use datastore::topics::TopicKey;
+    use std::sync::mpsc::{channel, Sender};
+
+    #[tokio::test]
+    async fn test_tcp_server() {
+        pretty_env_logger::init();
+        let options = TCPServerOptions {
+            port: 8080,
+            address: "0.0.0.0".to_string(),
+            update_interval: VicDuration::new_hz(50.0),
+        };
+        let mut adapter = TCPServerAdapter::new(options);
+        assert_eq!(adapter.options.port, 8080);
     }
 }
